@@ -1,9 +1,9 @@
 #!/usr/bin/python3
+import re
 import socket
 import sys
 import threading
 import time
-import re
 
 TIMER_LENGTH = 70
 PEER_EXIT = False
@@ -84,12 +84,12 @@ def inform_peer_quit():
     tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     message = str(this_peer) + " departing " + str(next_peer) + " " + str(after_peer)
 
-    tcp_send.connect((address, p_peer1+PORT_OFFSET))
+    tcp_send.connect((address, p_peer1 + PORT_OFFSET))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
 
     tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_send.connect((address, p_peer2+PORT_OFFSET))
+    tcp_send.connect((address, p_peer2 + PORT_OFFSET))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
 
@@ -213,7 +213,7 @@ def file_response(peer, file_name):
     tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     message = str(peer) + " request response " + str(file_name) + " " + str(this_peer)
 
-    tcp_send.connect((address, PORT_OFFSET+int(peer)))
+    tcp_send.connect((address, PORT_OFFSET + int(peer)))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
 
@@ -222,7 +222,7 @@ def file_response(peer, file_name):
 
 def ping_response(peer):
     message = "Ping Response " + str(this_peer)
-    addr = (address, peer+PORT_OFFSET)
+    addr = (address, peer + PORT_OFFSET)
     peer_socket.sendto(message.encode('utf-8'), addr)
 
 
@@ -255,7 +255,7 @@ def check_peer_alive():
 def peer_query(query_peer):
     tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     message = "query " + str(this_peer)
-    tcp_send.connect((address, query_peer+PORT_OFFSET))
+    tcp_send.connect((address, query_peer + PORT_OFFSET))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
 
@@ -263,7 +263,7 @@ def peer_query(query_peer):
 def peer_query_response(query_peer):
     tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     message = "query response " + str(next_peer)
-    tcp_send.connect((address, query_peer+PORT_OFFSET))
+    tcp_send.connect((address, query_peer + PORT_OFFSET))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
 

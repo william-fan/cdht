@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 
-TIMER_LENGTH = 70
+TIMER_LENGTH = 80
 PEER_EXIT = False
 FINAL_EXIT = False
 PORT_OFFSET = 50000

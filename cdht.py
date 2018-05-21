@@ -7,12 +7,15 @@ import time
 
 TIMER_LENGTH = 70
 PEER_EXIT = False
+FINAL_EXIT = False
 PORT_OFFSET = 50000
 this_peer = int(sys.argv[1])
 next_peer = int(sys.argv[2])
 after_peer = int(sys.argv[3])
 p_peer1 = -1
 p_peer2 = -1
+p_peer1_confirm = False
+p_peer2_confirm = False
 
 next_peer_timer = TIMER_LENGTH
 after_peer_timer = TIMER_LENGTH
@@ -48,19 +51,34 @@ def ping_peers():
 
 
 def receive():
+    global p_peer1_confirm
+    global p_peer2_confirm
+    global FINAL_EXIT
     while 1:
         try:
-            if PEER_EXIT:
+            if FINAL_EXIT:
                 break
             else:
-                message, addr = peer_socket.recvfrom(1024)
-                msg = message.decode('utf-8')
-                message_handler(msg)
+                if not PEER_EXIT:
+                    message, addr = peer_socket.recvfrom(1024)
+                    msg = message.decode('utf-8')
+                    message_handler(msg)
 
                 connection_socket, addr = tcp_receive.accept()
                 sentence = connection_socket.recv(1024)
                 sentence = sentence.decode('utf-8')
-                message_handler(sentence)
+                if not PEER_EXIT:
+                    message_handler(sentence)
+                else:
+                    sentence = sentence.strip()
+                    confirm_match = re.match(r'Confirm ([0-9]+)', sentence)
+                    if confirm_match:
+                        if int(confirm_match.group(1)) == p_peer1:
+                            p_peer1_confirm = True
+                        if int(confirm_match.group(1)) == p_peer2:
+                            p_peer2_confirm = True
+                    if p_peer1_confirm and p_peer2_confirm:
+                        FINAL_EXIT = True
         except socket.error:
             pass
 
@@ -81,9 +99,10 @@ def input_handler():
 
 def inform_peer_quit():
     global PEER_EXIT
-    tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     message = str(this_peer) + " departing " + str(next_peer) + " " + str(after_peer)
+    PEER_EXIT = True
 
+    tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_send.connect((address, p_peer1 + PORT_OFFSET))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
@@ -92,8 +111,6 @@ def inform_peer_quit():
     tcp_send.connect((address, p_peer2 + PORT_OFFSET))
     tcp_send.send(message.encode('utf-8'))
     tcp_send.close()
-
-    PEER_EXIT = True
 
 
 # String Format:
@@ -165,8 +182,6 @@ def message_handler(msg):
         after_port = PORT_OFFSET + after_peer
         print("My second successor is now peer " + str(after_peer))
         after_peer_timer = TIMER_LENGTH
-    else:
-        print(msg)
 
 
 def peer_update(leaving_peer, peer_one, peer_two):
@@ -176,6 +191,13 @@ def peer_update(leaving_peer, peer_one, peer_two):
     global after_port
     global next_peer_timer
     global after_peer_timer
+
+    # send confirmation message
+    message = "Confirm " + str(this_peer)
+    tcp_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_send.connect((address, int(leaving_peer)+PORT_OFFSET))
+    tcp_send.send(message.encode('utf-8'))
+    tcp_send.close()
 
     print("Peer " + leaving_peer + " will depart from the network.")
     if next_peer == int(leaving_peer):
@@ -318,5 +340,5 @@ thread4.daemon = True
 thread4.start()
 while 1:
     time.sleep(0.2)
-    if PEER_EXIT:
+    if FINAL_EXIT:
         sys.exit(0)
